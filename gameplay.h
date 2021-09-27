@@ -22,16 +22,16 @@ class Field {
 
     struct Graph;
 
-    WINDOW* m_fieldWindow;
+    std::map<std::string, WINDOW*> m_windows;
+    const Player& m_player;
     int m_row;
     int m_col;
     std::vector<Room> m_rooms;
     Actor*** m_field;
     Graph** m_mask;
-    const Player& m_player;
 
 public:
-    Field(int col, int row, int xOffset, int yOffset, const Player& player);
+    Field(const std::map<std::string, WINDOW*>& windows, const Player& player);
     ~Field();
 
     //getters:
@@ -58,12 +58,13 @@ public:
 };
 
 class Game {
+    std::map<std::string, WINDOW*> m_windows;
     Field& m_field;
     Player& m_player;
     Point m_playerCoord;
 
 public:
-    Game(Field& field, Player& player, UIActionType difficulty = UIActionType::MEDIUM) : m_field { field }, m_player{ player }{
+    Game(const std::map<std::string, WINDOW*>& windows, Field& field, Player& player, UIActionType difficulty = UIActionType::MEDIUM) : m_windows{ windows }, m_field { field }, m_player{ player }{
         m_playerCoord = m_field.getRandomPlayerStartCoord();
     }
 

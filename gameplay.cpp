@@ -1,3 +1,5 @@
+#define PLAYER_COLOR 1
+
 #include "gameplay.h"
 #include "gameplaySettings.h"
 
@@ -64,9 +66,13 @@ struct Field::Graph {
 //массив со смещениями, для обхода вокруг точки:
 Point Field::Graph::offset[8]{ { 1, -1 }, { 1, 0 }, { 1, 1 }, { 0, 1 }, { -1, 1 }, { -1, 0 }, { -1, -1 }, { 0, -1 } };
 
-Field::Field(int col, int row, int xOffset, int yOffset, const Player& player) : m_col{ (col - (xOffset * 2 + 6)) / 2 }, m_row{ row - 12 }, m_player{ player } {
-    m_fieldWindow = newwin(row - 10, col - (xOffset * 2 + 4), yOffset + 1, xOffset + 2);
-    box(m_fieldWindow, 0, 0);
+Field::Field(const std::map<std::string, WINDOW*>& windows, const Player& player) : m_windows{ windows }, m_player{ player }{
+    //опеределеине m_col и m_row для генерации игрового поля:
+    int maxRow, maxCol;
+    getmaxyx(m_windows["field"], maxRow, maxCol);
+    m_col = maxCol / 2 - 1;
+    m_row = maxRow - 2;
+
     generateField(m_col, m_row);
 }
 
@@ -85,7 +91,7 @@ void Field::generateField(int x, int y) {
     m_col = x;
     m_row = y;
 
-    //генерируем поле заполенное стенами:
+    //генерация поля заполенного стенами:
     m_field = new Actor * *[m_col];
     for (int x = 0; x < m_col; ++x) {
         m_field[x] = new Actor * [m_row];
@@ -94,7 +100,7 @@ void Field::generateField(int x, int y) {
         }
     }
 
-    //генерируем массив-маску:  
+    //генерация массива-маски:  
     m_mask = new Graph * [m_col];
     for (int x = 0; x < m_col; ++x) {
         m_mask[x] = new Graph[m_row];
@@ -143,15 +149,15 @@ void Field::generatePassages() {
         return;
 
     for (unsigned int i = 1; i < m_rooms.size(); ++i) {
-        //обновляем массив-маску в соответствии с текущим m_field:
+        //обнуление массива-маски в соответствии с текущим m_field:
         for (int x = 0; x < m_col; ++x)
             for (int y = 0; y < m_row; ++y) {
-                //определяем стоимость каждлый клетки:
+                //определение стоимости каждлый клетки:
                 int wayCost;
                 m_field[x][y]->isObstacle() ? wayCost = gameplaySettings::wallCost : wayCost = gameplaySettings::spaceCost;
                 m_mask[x][y] = Graph(x, y, wayCost);
             }
-        //генерируем проход между двумя соседними комнатами в массиве:        
+        //генерация проходов между двумя соседними комнатами в массиве:       
         Room currentRoom = m_rooms[i - 1];
         Room nextRoom = m_rooms[i];
 
@@ -181,19 +187,22 @@ void Field::generatePassages() {
 
                 next.cameFrom = &m_mask[current.point.x][current.point.y];
 
-                //рассчитываем стоимость клетки:
+                //рассчет стоимости клетки:
                 next.cost.wayCost += current.cost.wayCost;
                 if (i % 2 == 0)
-                    next.cost.wayCost += gameplaySettings::diagonalCost; //стоимость перемещения по диагонали
+                    //стоимость перемещения по диагонали:
+                    next.cost.wayCost += gameplaySettings::diagonalCost; 
                 else
-                    next.cost.wayCost += gameplaySettings::orthogonalCost; //стоимость перемещения по ортогонали
-                next.cost.distanceCost += std::abs(finish.point.x - next.point.x) + std::abs(finish.point.y - next.point.y) * 10;   //стоимость в зависимости от растояния до цекли
+                    //стоимость перемещения по ортогонали:
+                    next.cost.wayCost += gameplaySettings::orthogonalCost;
+                //стоимость в зависимости от растояния до цели:
+                next.cost.distanceCost += std::abs(finish.point.x - next.point.x) + std::abs(finish.point.y - next.point.y) * 10;
 
                 m_mask[next.point.x][next.point.y] = next;
-                //если нашли цель:
+                //если цель найдена:
                 if (next == finish) {
                     isFound = true;
-                    //прокладываем пусть на m_field до цели:
+                    //отображение пути на m_field до цели:
                     while (next != start) {
                         for (int i = 0; i < gameplaySettings::passagesWidth; ++i) {
                             m_field[next.point.x + Field::Graph::offset[i].x][next.point.y + Field::Graph::offset[i].y] = &space;
@@ -202,7 +211,7 @@ void Field::generatePassages() {
                     }
                     break;
                 }
-                //если нет, то добавляем клетку в priority_queue:
+                //если нет, то клетка добавляется в priority_queue(wave):
                 else
                     wave.push(next);
             }
@@ -223,7 +232,7 @@ Actor*& Field::getRandomPlaceInRandomRoom() {
     Field::Room randomRoom = m_rooms[rand() % m_rooms.size()];
     return get(randomRoom.x + rand() % randomRoom.width, randomRoom.y + rand() % randomRoom.hieght);
 }
-
+//debug:
 void Field::printField() const {
     for (int y = 0; y < m_row; ++y) {
         for (int x = 0; x < m_col; ++x) {
@@ -243,8 +252,7 @@ void Field::printMask() const {
 }
 
 void Field::redrawField(Point newCoord) {
- 
-    //обнуляем массив-маску:
+    //обнуление массива-маски:
     for (int x = 0; x < m_col; ++x)
         for (int y = 0; y < m_row; ++y) {
             m_mask[x][y] = Graph(x, y, 0);
@@ -253,17 +261,17 @@ void Field::redrawField(Point newCoord) {
     bool b_isSeeSomething{ false };
     std::vector<Actor*> seenActors;
 
-    //определение границ зоны видимости по оси x, что бы не выйти за пределы карты:
+    //определение границ зоны видимости по оси X, что бы не выйти за пределы карты:
     int fieldOfView{ m_player.getFielfOfView() };
     int leftBorder = -fieldOfView + newCoord.x < 0 ? 0 : -fieldOfView + newCoord.x;
     int rightBorder = fieldOfView + newCoord.x > m_col - 1 ? m_col - 1 : fieldOfView + newCoord.x;
 
     for (int x = leftBorder; x <= rightBorder; ++x) {
         int yBorder = (int)std::sqrt(std::pow(fieldOfView, 2) - std::pow(newCoord.x - x, 2));
-        //определение границ зоны видимости по оси y, что бы не выйти за пределы карты:
+        //определение границ зоны видимости по оси Y, что бы не выйти за пределы карты:
         int topBorder = newCoord.y - yBorder < 0 ? 0 : newCoord.y - yBorder;
         int downBorder = newCoord.y + yBorder > m_row - 1 ? m_row - 1 : newCoord.y + yBorder;
-        //заполняем в массиве-маске область видимости:
+        //заполенине в массиве-маске области видимости:
         for (int y = topBorder; y <= downBorder; ++y) {
             m_mask[x][y].cost.wayCost = 1;
         }
@@ -271,7 +279,7 @@ void Field::redrawField(Point newCoord) {
 
     for (int y = 0; y < m_row; ++y) {
         for (int x = 0; x < m_col; ++x) {
-            wrefresh(m_fieldWindow);
+            //зона видимости:
             if (m_mask[x][y].cost == 1) {
                 //поиск объектов в зоне видимости:
                 switch (m_field[x][y]->getType()) {
@@ -285,28 +293,36 @@ void Field::redrawField(Point newCoord) {
                     break;
                 }
                 //отображение игрока:
-                if (x == newCoord.x && y == newCoord.y)
-                    mvwaddch(m_fieldWindow, 1 + y, 1 + x * 2, m_player.getSign() | A_BOLD);
+                if (x == newCoord.x && y == newCoord.y) {
+                    //начало отображения с 1 что бы избежать границы box():  
+                    wattron(m_windows["field"], COLOR_PAIR(PLAYER_COLOR));
+                    mvwaddch(m_windows["field"], 1 + y, 1 + x * 2, m_player.getSign() | A_BOLD);
+                    wattroff(m_windows["field"], COLOR_PAIR(PLAYER_COLOR));
+                }
+                //отображение окружения:
                 else
-                    mvwprintw(m_fieldWindow, 1 + y, 1 + x * 2, "%c%c", m_field[x][y]->getSign(), ' ');
+                    mvwprintw(m_windows["field"], 1 + y, 1 + x * 2, "%c%c", m_field[x][y]->getSign(), ' ');
             }
+            //вне зоны видимости (туман войны):
             else
-                mvwprintw(m_fieldWindow, 1 + y, 1 + x * 2, "%c%c", fogOfWar.getSign(), '.');
+                mvwprintw(m_windows["field"], 1 + y, 1 + x * 2, "%c%c", fogOfWar.getSign(), '.');
         }
+        wrefresh(m_windows["field"]);
     }
     
     //вывод на экран описаний объектов в зоне видимости:
+    wclear(m_windows["info"]);
+    box(m_windows["info"], 0, 0);
     if (b_isSeeSomething) {
-        mvwprintw(m_fieldWindow, LINES - 7, 4, "You are seeing: ");
+        mvwprintw(m_windows["info"], 1, 1, "You are seeing: ");
         for (const Actor* actor : seenActors) {
-            wprintw(m_fieldWindow, "%s%c", actor->getDescription(), " ");
+            wprintw(m_windows["info"], "%s%c", actor->getDescription().c_str(), " ");
         }
         std::cout << "\n";
     }
     else
-        mvwprintw(m_fieldWindow, LINES - 7, 4, "You are seeing nothing interesting.");
-
-    wrefresh(m_fieldWindow);
+        mvwprintw(m_windows["info"], 1, 1, "You are seeing nothing interesting.");
+    wrefresh(m_windows["info"]);
 }
 
 //Game:
@@ -319,11 +335,12 @@ void Game::map() const {
 
 void Game::printMask() const { m_field.printMask(); }
 
-//подбираем предмет в инвентарь:
+//подбор предмета в инвентарь:
 void Game::pickUp(Actor*& item) {
     m_player.addItemToInventory(item);
     m_field.redrawField(m_playerCoord);
-    std::cout << "-> Item: " << item->getName() << " add to your inventory.\n";
+    mvwprintw(m_windows["info"], 2, 1, "%s%s%s", "->Item: ", item->getName().c_str(), " add to your inventory.");
+    wrefresh(m_windows["info"]);
     item = &space;
 }
 
@@ -440,7 +457,10 @@ void Game::left() {
         interact();
 }
 
+//функция иницализации режима игры:
 UIActionType Game::inGame() {
+    wclear(m_windows["field"]);
+    box(m_windows["field"], 0, 0);
     m_field.redrawField(m_playerCoord);
     while (true) {
         switch (getch()) {

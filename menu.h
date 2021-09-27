@@ -6,7 +6,7 @@
 #include "structs.h"
 
 class Menu {
-	WINDOW* m_menuWindow;
+	std::map<std::string, WINDOW*> m_windows;
 
 	int m_mainYOffset;
 	int m_mainXOffset;
@@ -44,7 +44,7 @@ public:
 		PAUSE
 	};
 
-	Menu();
+	Menu(const std::map <std::string, WINDOW*>& windows);
 
 	void printMenu(int YOffset, int XOffset, int selected, int numItems, const char* title, const char** items, bool isInBox = false);
 	UIActionType selectMenu(Menu::MenuType type, int selected);

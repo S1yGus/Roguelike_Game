@@ -1,44 +1,42 @@
 #include "menu.h"
 #include "menuSettings.h"
 
-Menu::Menu() {
-    //рассчет положений окна и элементов меню:
-    int menuWindowYOffset = (LINES - menuSettings::menuWindowHeight) / 2 + menuSettings::menuWindowYOffset;
-    int menuWindowXOffset = (COLS - menuSettings::menuWindowWides) / 2 + menuSettings::menuWindowXOffset;
-    m_menuWindow = newwin(menuSettings::menuWindowHeight, menuSettings::menuWindowWides, menuWindowYOffset, menuWindowXOffset);
-    //Main menu:
+Menu::Menu(const std::map <std::string, WINDOW*>& windows) : m_windows{ windows } {
+    int menuWindowHeight, menuWindowWides;
+    getmaxyx(m_windows["menu"], menuWindowHeight, menuWindowWides);
+    //рассчет положения элементов main menu:
     m_numOfMainItems = sizeof(m_mainMenuItems) / sizeof(char*);
-    m_mainYOffset = (menuSettings::menuWindowHeight - ((int)(sizeof(m_mainMenuItems) / sizeof(char*)) + 2)) / 2 + menuSettings::menuTitleYOffset;
-    m_mainXOffset = (menuSettings::menuWindowWides - strlen(m_mainMenuTitle)) / 2 + menuSettings::menuTitleXOffset;
-    //Options menu:
+    m_mainYOffset = (menuWindowHeight - ((int)(sizeof(m_mainMenuItems) / sizeof(char*)) + menuSettings::spaceBeetwenTitleAndItems)) / 2 + menuSettings::menuTitleYOffset;
+    m_mainXOffset = (menuWindowWides - strlen(m_mainMenuTitle)) / 2 + menuSettings::menuTitleXOffset;
+    //рассчет положения элементов options menu:
     m_numOfOptionsItems = sizeof(m_optionsMenuItems) / sizeof(char*);
-    m_optionsYOffset = (menuSettings::menuWindowHeight - ((int)(sizeof(m_optionsMenuItems) / sizeof(char*)) + 2)) / 2 + menuSettings::menuTitleYOffset;
-    m_optionsXOffset = (menuSettings::menuWindowWides - strlen(m_optionsMenuTitle)) / 2 + menuSettings::menuTitleXOffset;
-    //Pause menu:
+    m_optionsYOffset = (menuWindowHeight - ((int)(sizeof(m_optionsMenuItems) / sizeof(char*)) + menuSettings::spaceBeetwenTitleAndItems)) / 2 + menuSettings::menuTitleYOffset;
+    m_optionsXOffset = (menuWindowWides - strlen(m_optionsMenuTitle)) / 2 + menuSettings::menuTitleXOffset;
+    //рассчет положения элементов pause menu:
     m_numOfPauseItems = sizeof(m_pauseMenuItems) / sizeof(char*);
-    m_pauseYOffset = (menuSettings::menuWindowHeight - ((int)(sizeof(m_pauseMenuItems) / sizeof(char*)) + 2)) / 2 + menuSettings::menuTitleYOffset;
-    m_pauseXOffset = (menuSettings::menuWindowWides - strlen(m_pauseMenuTitle)) / 2 + menuSettings::menuTitleXOffset;
+    m_pauseYOffset = (menuWindowHeight - ((int)(sizeof(m_pauseMenuItems) / sizeof(char*)) + menuSettings::spaceBeetwenTitleAndItems)) / 2 + menuSettings::menuTitleYOffset;
+    m_pauseXOffset = (menuWindowWides - strlen(m_pauseMenuTitle)) / 2 + menuSettings::menuTitleXOffset;
 }
 
-//Универсальная функция для вывода меню:
+//универсальная функция для вывода меню:
 void Menu::printMenu(int YOffset, int XOffset, int selected, int numItems, const char* title, const char** items, bool isInBox) {
-    wclear(m_menuWindow);
+    wclear(m_windows["menu"]);
     if (isInBox)
-        box(m_menuWindow, 0, 0);
-    //Вывод загаловка:
-    mvwprintw(m_menuWindow, YOffset, XOffset, title);
-    //Вывод элементов меню:
+        box(m_windows["menu"], 0, 0);
+    //вывод загаловка:
+    mvwprintw(m_windows["menu"], YOffset, XOffset, title);
+    //вывод элементов меню:
     for (int i = 0; i < numItems; ++i) {
         if (i == selected)
-            mvwprintw(m_menuWindow, YOffset + 2 + i, XOffset, "-> ");
+            mvwprintw(m_windows["menu"], YOffset + menuSettings::spaceBeetwenTitleAndItems + i, XOffset, "-> ");
         else
-            mvwprintw(m_menuWindow, YOffset + 2 + i, XOffset, "  ");
-        wprintw(m_menuWindow, "%s", items[i]);
+            mvwprintw(m_windows["menu"], YOffset + menuSettings::spaceBeetwenTitleAndItems + i, XOffset, "  ");
+        wprintw(m_windows["menu"], "%s", items[i]);
     }
-    wrefresh(m_menuWindow);
+    wrefresh(m_windows["menu"]);
 }
 
-//Универсальная функция для инициализации меню:
+//универсальная функция для инициализации меню:
 UIActionType Menu::inMenu(Menu::MenuType type) {
     int selected{ 0 };
     int numOfItems{ 0 };
@@ -74,10 +72,10 @@ UIActionType Menu::inMenu(Menu::MenuType type) {
     } while (true);
 }
 
-//Универсальная функция для выбора действия меню:
+//универсальная функция для выбора действия меню:
 UIActionType Menu::selectMenu(Menu::MenuType type, int selected) {
     switch (type) {
-    //Main:
+    //main:
     case Menu::MenuType::MAIN:
         switch (selected) {
         case 0:
@@ -92,7 +90,7 @@ UIActionType Menu::selectMenu(Menu::MenuType type, int selected) {
         }
         break;
 
-    //Options:
+    //options:
     case Menu::MenuType::OPTIONS:
         switch (selected) {
         case 0:
@@ -107,7 +105,7 @@ UIActionType Menu::selectMenu(Menu::MenuType type, int selected) {
         }
         break;
 
-    //Pause
+    //pause
     case Menu::MenuType::PAUSE:
         switch (selected) {
         case 0:
