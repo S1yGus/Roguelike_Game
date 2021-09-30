@@ -4,7 +4,7 @@
 #include <cstdlib>
 #include <ctime>
 #include "mainSettings.h"
-#include "menu.h"
+#include "UI.h"
 #include "actors.h"
 #include "gameactors.h"
 #include "gameplay.h"
@@ -42,65 +42,44 @@ int main() {
     init_pair(3, COLOR_BLACK, COLOR_WHITE);
     init_pair(4, COLOR_RED, COLOR_MAGENTA);
 
-    std::map<std::string, WINDOW*> windows;
+    Windows windows;
 
-    //создание и расчет положения mainWindow:
-    WINDOW* mainWindow = newwin(LINES - mainSettings::mainWindowYOffset * 2, COLS - mainSettings::mainWindowXOffset * 2, mainSettings::mainWindowYOffset, mainSettings::mainWindowXOffset);
-    box(mainWindow, 0, 0);
-    wrefresh(mainWindow);
-    windows["main"] = mainWindow;
+    UserInterface userInterface(windows);
 
-    //создание и расчет положения menuWindow: 
-    int menuWindowYOffset = (LINES - mainSettings::menuWindowHeight) / 2 + mainSettings::menuWindowYOffset;
-    int menuWindowXOffset = (COLS - mainSettings::menuWindowWides) / 2 + mainSettings::menuWindowXOffset;
-    WINDOW* menuWindow = newwin(mainSettings::menuWindowHeight, mainSettings::menuWindowWides, menuWindowYOffset, menuWindowXOffset);
-    windows["menu"] = menuWindow;
-
-    //создание и расчет положения fieldWindow:
-    int fieldWindowHeight, fieldWindowWides;
-    getmaxyx(windows["main"], fieldWindowHeight, fieldWindowWides);
-    WINDOW* fieldWindow = newwin(fieldWindowHeight - (mainSettings::infoWindowHeight + 2), fieldWindowWides - mainSettings::fieldWindowXOffset * 2, mainSettings::mainWindowYOffset + mainSettings::fieldWindowYOffset, mainSettings::mainWindowXOffset + mainSettings::fieldWindowXOffset);
-    windows["field"] = fieldWindow;
-
-    //создание и расчет положения infoWindow:
-    WINDOW* infoWindow = newwin(mainSettings::infoWindowHeight, getmaxx(windows["main"]) / 2, getmaxy(windows["field"]) + 2, mainSettings::mainWindowXOffset + mainSettings::fieldWindowXOffset);
-    windows["info"] = infoWindow;
-
-    Field field(windows, player);
+    Field field(userInterface, player);
 
     field.getRandomPlaceInRandomRoom() = &lamp;
     field.getRandomPlaceInRandomRoom() = &enemy;
     field.getRandomPlaceInRandomRoom() = &enemy;
     field.getRandomPlaceInRandomRoom() = &enemy;
 
-    Game game(windows, field, player);
+    Game game(userInterface, field, player);
 
-    Menu menu(windows);
     UIActionType difficulty{ UIActionType::MEDIUM }; //сложность
 
-    UIActionType action{ menu.inMenu(Menu::MenuType::MAIN) }; //текущее действие
+    UIActionType action{ userInterface.inMenu(UserInterface::MenuType::MAIN) }; //текущее действие
     while (true) {
         switch (action) {
         case UIActionType::GAME:
             action = game.inGame();
             break;
         case UIActionType::OPTIONS:
-            action = menu.inMenu(Menu::MenuType::OPTIONS);
+            action = userInterface.inMenu(UserInterface::MenuType::OPTIONS);
             break;
         case UIActionType::EASY:
             difficulty = UIActionType::EASY;
-            action = menu.inMenu(Menu::MenuType::MAIN);
+            action = userInterface.inMenu(UserInterface::MenuType::MAIN);
             break;
         case UIActionType::MEDIUM:
             difficulty = UIActionType::MEDIUM;
-            action = menu.inMenu(Menu::MenuType::MAIN);
+            action = userInterface.inMenu(UserInterface::MenuType::MAIN);
             break;
         case UIActionType::HARD:
             difficulty = UIActionType::HARD;
-            action = menu.inMenu(Menu::MenuType::MAIN);
+            action = userInterface.inMenu(UserInterface::MenuType::MAIN);
             break;
         case UIActionType::PAUSE:
-            action = menu.inMenu(Menu::MenuType::PAUSE);
+            action = userInterface.inMenu(UserInterface::MenuType::PAUSE);
             break;
         case UIActionType::RESUME:
             action = game.inGame();

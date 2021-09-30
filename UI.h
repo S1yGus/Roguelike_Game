@@ -5,8 +5,17 @@
 #include <cstring>
 #include "structs.h"
 
-class Menu {
+class Windows {
 	std::map<std::string, WINDOW*> m_windows;
+
+public:
+	Windows();
+	
+	WINDOW* operator[](std::string key);
+};
+
+class UserInterface {
+	Windows m_windows;
 
 	int m_mainYOffset;
 	int m_mainXOffset;
@@ -37,19 +46,29 @@ class Menu {
 		"Quit"
 	};
 
+	int m_battleYOffset;
+	int m_battleXOffset;
+	int m_numOfBattleItems;
+	const char* m_battleMenuItems[2]{
+		"Attack",
+		"Run"
+	};
+
 public:
 	enum class MenuType {
 		MAIN,
 		OPTIONS,
-		PAUSE
+		PAUSE,
+		BATTLE,
 	};
 
-	Menu(const std::map <std::string, WINDOW*>& windows);
+	UserInterface(Windows& windows);
 
-	void printMenu(int YOffset, int XOffset, int selected, int numItems, const char* title, const char** items, bool isInBox = false);
-	UIActionType selectMenu(Menu::MenuType type, int selected);
-	UIActionType inMenu(MenuType type);
+	void printMenu(WINDOW* window, int YOffset, int XOffset, int selected, int numItems, const char* title, const char** items, bool isInBox = false);
+	UIActionType selectMenu(UserInterface::MenuType type, int selected);
+	UIActionType inMenu(MenuType type, std::string titleText = "");
 
+	WINDOW* operator[](std::string key);
 };
 
 #endif

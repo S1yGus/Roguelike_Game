@@ -13,7 +13,10 @@ enum class UIActionType {
 
     PAUSE,
     RESUME,
-    QUIT
+    QUIT,
+
+        ATTACK,
+        RUN
 };
 
 enum class ActorType {
@@ -58,16 +61,19 @@ struct Point {
 class Actor;
 
 struct Stats {
-    int health;
+    int maxHealth;
+    int currentHealth;
     int strength;
     int fieldOfView;
     std::map<Actor*, int> inventory;
 
     Stats(int health = 0, int strenght = 0, int fieldOfView = 0)
-        : health{ health }, strength{ strenght }, fieldOfView{ fieldOfView } {}
+        : maxHealth{ health }, strength{ strenght }, fieldOfView{ fieldOfView } {
+        currentHealth = maxHealth;
+    }
 
     Stats& operator+=(Stats s) {
-        health += s.health;
+        currentHealth += s.currentHealth;
         strength += s.strength;
         fieldOfView += s.fieldOfView;
         return *this;

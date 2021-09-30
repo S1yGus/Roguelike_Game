@@ -8,6 +8,7 @@
 #include <cmath>
 #include <cstdlib>
 #include "actors.h"
+#include "UI.h"
 
 
 class Field {
@@ -22,7 +23,7 @@ class Field {
 
     struct Graph;
 
-    std::map<std::string, WINDOW*> m_windows;
+    UserInterface m_userInterface;
     const Player& m_player;
     int m_row;
     int m_col;
@@ -31,7 +32,7 @@ class Field {
     Graph** m_mask;
 
 public:
-    Field(const std::map<std::string, WINDOW*>& windows, const Player& player);
+    Field(const UserInterface& userInterface, const Player& player);
     ~Field();
 
     //getters:
@@ -55,16 +56,20 @@ public:
     void printMask() const;
 
     void redrawField(Point newCoord);
+
+    void clearField(Point newCoord);
+
+    void updateStatsMenu();
 };
 
 class Game {
-    std::map<std::string, WINDOW*> m_windows;
+    UserInterface m_userInterface;
     Field& m_field;
     Player& m_player;
     Point m_playerCoord;
 
 public:
-    Game(const std::map<std::string, WINDOW*>& windows, Field& field, Player& player, UIActionType difficulty = UIActionType::MEDIUM) : m_windows{ windows }, m_field { field }, m_player{ player }{
+    Game(const UserInterface& userInterface, Field& field, Player& player, UIActionType difficulty = UIActionType::MEDIUM) : m_userInterface{ userInterface }, m_field { field }, m_player{ player }{
         m_playerCoord = m_field.getRandomPlayerStartCoord();
     }
 
