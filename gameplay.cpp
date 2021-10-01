@@ -1,7 +1,6 @@
 #define PLAYER_COLOR 1
 
 #include "gameplay.h"
-#include "gameplaySettings.h"
 
 //Gameplay actors:
 Actor fogOfWar('*');
@@ -69,7 +68,7 @@ Point Field::Graph::offset[8]{ { 1, -1 }, { 1, 0 }, { 1, 1 }, { 0, 1 }, { -1, 1 
 Field::Field(const UserInterface& userInterface, const Player& player) : m_userInterface{ userInterface }, m_player{ player }{
     //опеределеине m_col и m_row для генерации игрового поля:
     int maxRow, maxCol;
-    getmaxyx(m_userInterface["field"], maxRow, maxCol);
+    getmaxyx(m_userInterface.getFieldWindow(), maxRow, maxCol);
     m_col = maxCol / 2 - 1;
     m_row = maxRow - 2;
 
@@ -295,51 +294,46 @@ void Field::redrawField(Point newCoord) {
                 //отображение игрока:
                 if (x == newCoord.x && y == newCoord.y) {
                     //начало отображения с 1 что бы избежать границы box():  
-                    wattron(m_userInterface["field"], COLOR_PAIR(PLAYER_COLOR));
-                    mvwaddch(m_userInterface["field"], 1 + y, 1 + x * 2, m_player.getSign() | A_BOLD);
-                    wattroff(m_userInterface["field"], COLOR_PAIR(PLAYER_COLOR));
+                    wattron(m_userInterface.getFieldWindow(), COLOR_PAIR(PLAYER_COLOR));
+                    mvwaddch(m_userInterface.getFieldWindow(), 1 + y, 1 + x * 2, m_player.getSign() | A_BOLD);
+                    wattroff(m_userInterface.getFieldWindow(), COLOR_PAIR(PLAYER_COLOR));
                 }
                 //отображение окружения:
                 else
-                    mvwprintw(m_userInterface["field"], 1 + y, 1 + x * 2, "%c%c", m_field[x][y]->getSign(), ' ');
+                    mvwprintw(m_userInterface.getFieldWindow(), 1 + y, 1 + x * 2, "%c%c", m_field[x][y]->getSign(), ' ');
             }
             //вне зоны видимости (туман войны):
             else
-                mvwprintw(m_userInterface["field"], 1 + y, 1 + x * 2, "%c%c", fogOfWar.getSign(), '.');
+                mvwprintw(m_userInterface.getFieldWindow(), 1 + y, 1 + x * 2, "%c%c", fogOfWar.getSign(), '.');
         }
-        wrefresh(m_userInterface["field"]);
+        wrefresh(m_userInterface.getFieldWindow());
         updateStatsMenu();
     }
     
     //вывод на экран описаний объектов в зоне видимости:
-    wclear(m_userInterface["info"]);
-    box(m_userInterface["info"], 0, 0);
+    wclear(m_userInterface.getInfoWindow());
+    box(m_userInterface.getInfoWindow(), 0, 0);
     if (b_isSeeSomething) {
-        mvwprintw(m_userInterface["info"], 1, 1, "You are seeing: ");
+        mvwprintw(m_userInterface.getInfoWindow(), 1, 1, "You are seeing: ");
         for (const Actor* actor : seenActors) {
-            wprintw(m_userInterface["info"], "%s%c", actor->getDescription().c_str(), " ");
+            wprintw(m_userInterface.getInfoWindow(), "%s%c", actor->getDescription().c_str(), " ");
         }
         std::cout << "\n";
     }
     else
-        mvwprintw(m_userInterface["info"], 1, 1, "You are seeing nothing interesting.");
-    wrefresh(m_userInterface["info"]);
+        mvwprintw(m_userInterface.getInfoWindow(), 1, 1, "You are seeing nothing interesting.");
+    wrefresh(m_userInterface.getInfoWindow());
 }
 
 void Field::clearField(Point newCoord) {
-    wclear(m_userInterface["field"]);
-    box(m_userInterface["field"], 0, 0);
+    wclear(m_userInterface.getFieldWindow());
+    box(m_userInterface.getFieldWindow(), 0, 0);
     redrawField(newCoord);
 }
 
 //вывод на экран значений характеристик персонажа:
 void Field::updateStatsMenu() {
-    wclear(m_userInterface["stats"]);
-    box(m_userInterface["stats"], 0, 0);
-    mvwprintw(m_userInterface["stats"], 1, 1, "%s%d", "HP ", m_player.getStats().currentHealth);
-    double healthBarLength = (double)m_player.getStats().currentHealth / m_player.getStats().maxHealth;
-    mvwprintw(m_userInterface["stats"], 1, 7, "%s", std::string((getmaxx(m_userInterface["stats"]) - 8) * healthBarLength, '|').c_str());
-    wrefresh(m_userInterface["stats"]);
+    m_userInterface.updateStatsMenu(m_player.getStats().currentHealth, m_player.getStats().maxHealth);
 }
 
 //Game:
@@ -355,8 +349,8 @@ void Game::printMask() const { m_field.printMask(); }
 void Game::pickUp(Actor*& item) {
     m_player.addItemToInventory(item);
     m_field.redrawField(m_playerCoord);
-    mvwprintw(m_userInterface["info"], 2, 1, "%s%s%s", "->Item: ", item->getName().c_str(), " add to your inventory.");
-    wrefresh(m_userInterface["info"]);
+    mvwprintw(m_userInterface.getInfoWindow(), 2, 1, "%s%s%s", "->Item: ", item->getName().c_str(), " add to your inventory.");
+    wrefresh(m_userInterface.getInfoWindow());
     item = &space;
 }
 
@@ -375,7 +369,7 @@ void Game::battle(Actor& attacker, Actor*& deffender) {
                 action = m_userInterface.inMenu(UserInterface::MenuType::BATTLE, titleText);
             }
             else {
-                wprintw(m_userInterface["action"], "Congratulations! You are win the battle!");
+                wprintw(m_userInterface.getActionWindow(), "Congratulations! You are win the battle!");
                 deffender = &space;
                 inBattle = false;
             }

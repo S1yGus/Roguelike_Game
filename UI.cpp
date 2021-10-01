@@ -1,8 +1,7 @@
 #include "UI.h"
-#include "UISettings.h"
 
 //Windows:
-Windows::Windows() {
+UserInterface::Windows::Windows() {
     //создание и расчет положения mainWindow:
     WINDOW* mainWindow = newwin(LINES - UISettings::mainWindowYOffset * 2, COLS - UISettings::mainWindowXOffset * 2, UISettings::mainWindowYOffset, UISettings::mainWindowXOffset);
     box(mainWindow, 0, 0);
@@ -34,14 +33,20 @@ Windows::Windows() {
     int actionWindowXOffset = (COLS - UISettings::actionWindowWides) / 2 + UISettings::actionWindowXOffset;
     WINDOW* actionWindow = newwin(UISettings::actionWindowHeight, UISettings::actionWindowWides, actionWindowYOffset, actionWindowXOffset);
     m_windows["action"] = actionWindow;
+
+    //создание и расчет положения msgWindow:
+    int msgWindowYOffset = (LINES - UISettings::msgWindowHeight) / 2 + UISettings::msgWindowYOffset;
+    int msgWindowXOffset = (COLS - UISettings::msgWindowWides) / 2 + UISettings::msgWindowXOffset;
+    WINDOW* msgWindow = newwin(UISettings::msgWindowHeight, UISettings::msgWindowWides, msgWindowYOffset, msgWindowXOffset);
+    m_windows["msg"] = msgWindow;
 }
 
-WINDOW* Windows::operator[](std::string key) {
+WINDOW* UserInterface::Windows::operator[](std::string key) {
     return m_windows[key];
 }
 
 //UserInterface:
-UserInterface::UserInterface(Windows& windows) : m_windows{ windows } {
+UserInterface::UserInterface() {
     //рассчет положения элементов main menu:
     m_numOfMainItems = sizeof(m_mainMenuItems) / sizeof(char*);
     m_mainYOffset = (UISettings::menuWindowHeight - ((int)(sizeof(m_mainMenuItems) / sizeof(char*)) + UISettings::spaceBeetwenTitleAndItems)) / 2 + UISettings::menuTitleYOffset;
@@ -97,8 +102,8 @@ UIActionType UserInterface::inMenu(UserInterface::MenuType type, std::string tit
             numOfItems = m_numOfPauseItems;
             break;
         case UserInterface::MenuType::BATTLE:
-            m_battleXOffset = (UISettings::actionWindowWides - titleText.length()) / 2 + UISettings::menuTitleXOffset;
-            printMenu(m_windows["action"], m_battleYOffset, m_battleXOffset, selected, m_numOfBattleItems, titleText.c_str(), m_battleMenuItems, true);
+            int battleXOffset = (UISettings::actionWindowWides - titleText.length()) / 2 + UISettings::menuTitleXOffset;
+            printMenu(m_windows["action"], m_battleYOffset, battleXOffset, selected, m_numOfBattleItems, titleText.c_str(), m_battleMenuItems, true);
             numOfItems = m_numOfBattleItems;
             break;
         }
@@ -173,6 +178,17 @@ UIActionType UserInterface::selectMenu(UserInterface::MenuType type, int selecte
             break;
         }
     }
+}
+
+//вывод на на экран stats значений характеристик персонажа:
+void UserInterface::updateStatsMenu(int currentHealth, int maxHealth) {
+    wclear(m_windows["stats"]);
+    box(m_windows["stats"], 0, 0);
+    mvwprintw(m_windows["stats"], 1, 1, "%s%d", "HP ", currentHealth);
+    double healthBarLength = (double)currentHealth / maxHealth;
+    int numberOfEntrance = (getmaxx(m_windows["stats"]) - 8) * healthBarLength;
+    mvwprintw(m_windows["stats"], 1, 7, "%s", std::string(numberOfEntrance, '|').c_str());
+    wrefresh(m_windows["stats"]);
 }
 
 WINDOW* UserInterface::operator[](std::string key) {

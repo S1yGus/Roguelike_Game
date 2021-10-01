@@ -3,7 +3,7 @@
 #include <curses.h>
 #include <cstdlib>
 #include <ctime>
-#include "mainSettings.h"
+#include "settings.h"
 #include "UI.h"
 #include "actors.h"
 #include "gameactors.h"
@@ -42,9 +42,7 @@ int main() {
     init_pair(3, COLOR_BLACK, COLOR_WHITE);
     init_pair(4, COLOR_RED, COLOR_MAGENTA);
 
-    Windows windows;
-
-    UserInterface userInterface(windows);
+    UserInterface userInterface;
 
     Field field(userInterface, player);
 

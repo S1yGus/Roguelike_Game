@@ -1,5 +1,4 @@
-#ifndef STRUCTS_H
-#define STRUCTS_H
+#pragma once
 
 #include <iostream>
 #include <map>
@@ -79,5 +78,3 @@ struct Stats {
         return *this;
     }
 };
-
-#endif

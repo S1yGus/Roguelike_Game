@@ -1,20 +1,20 @@
-#ifndef MENU_H
-#define MENU_H
+#pragma once
 
 #include <curses.h>
 #include <cstring>
+#include "settings.h"
 #include "structs.h"
 
-class Windows {
-	std::map<std::string, WINDOW*> m_windows;
-
-public:
-	Windows();
-	
-	WINDOW* operator[](std::string key);
-};
-
 class UserInterface {
+	class Windows {
+		std::map<std::string, WINDOW*> m_windows;
+
+	public:
+		Windows();
+
+		WINDOW* operator[](std::string key);
+	};
+
 	Windows m_windows;
 
 	int m_mainYOffset;
@@ -47,7 +47,6 @@ class UserInterface {
 	};
 
 	int m_battleYOffset;
-	int m_battleXOffset;
 	int m_numOfBattleItems;
 	const char* m_battleMenuItems[2]{
 		"Attack",
@@ -62,13 +61,37 @@ public:
 		BATTLE,
 	};
 
-	UserInterface(Windows& windows);
+	UserInterface();
 
-	void printMenu(WINDOW* window, int YOffset, int XOffset, int selected, int numItems, const char* title, const char** items, bool isInBox = false);
-	UIActionType selectMenu(UserInterface::MenuType type, int selected);
+	//inline getters:
+	WINDOW* getMainWindow() {
+		return m_windows["main"];
+	}
+	WINDOW* getMenuWindow() {
+		return m_windows["menu"];
+	}
+	WINDOW* getFieldWindow() {
+		return m_windows["field"];
+	}
+	WINDOW* getInfoWindow() {
+		return m_windows["info"];
+	}
+	WINDOW* getStatsWindow() {
+		return m_windows["stats"];
+	}
+	WINDOW* getActionWindow() {
+		return m_windows["action"];
+	}
+	WINDOW* getMSGWindow() {
+		return m_windows["msg"];
+	}
+
 	UIActionType inMenu(MenuType type, std::string titleText = "");
+	void updateStatsMenu(int curretnHealth, int maxHealth);
 
 	WINDOW* operator[](std::string key);
-};
 
-#endif
+private:
+	void printMenu(WINDOW* window, int YOffset, int XOffset, int selected, int numItems, const char* title, const char** items, bool isInBox = false);
+	UIActionType selectMenu(UserInterface::MenuType type, int selected);
+};

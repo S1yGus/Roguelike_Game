@@ -1,5 +1,4 @@
-#ifndef GAMEPLAY_H
-#define GAMEPLAY_H
+#pragma once
 
 #include <curses.h>
 #include <vector>
@@ -7,6 +6,7 @@
 #include <queue>
 #include <cmath>
 #include <cstdlib>
+#include "settings.h"
 #include "actors.h"
 #include "UI.h"
 
@@ -97,5 +97,3 @@ public:
 
     void regenerateField(int x, int y);
 };
-
-#endif

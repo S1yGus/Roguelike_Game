@@ -1,5 +1,4 @@
-#ifndef ACTORS_H
-#define ACTORS_H
+#pragma once
 
 #include <string>
 #include "structs.h"
@@ -103,5 +102,3 @@ public:
 
     void showInventory() const;
 };
-
-#endif
