@@ -33,12 +33,6 @@ UserInterface::Windows::Windows() {
     int actionWindowXOffset = (COLS - UISettings::actionWindowWides) / 2 + UISettings::actionWindowXOffset;
     WINDOW* actionWindow = newwin(UISettings::actionWindowHeight, UISettings::actionWindowWides, actionWindowYOffset, actionWindowXOffset);
     m_windows["action"] = actionWindow;
-
-    //создание и расчет положения msgWindow:
-    int msgWindowYOffset = (LINES - UISettings::msgWindowHeight) / 2 + UISettings::msgWindowYOffset;
-    int msgWindowXOffset = (COLS - UISettings::msgWindowWides) / 2 + UISettings::msgWindowXOffset;
-    WINDOW* msgWindow = newwin(UISettings::msgWindowHeight, UISettings::msgWindowWides, msgWindowYOffset, msgWindowXOffset);
-    m_windows["msg"] = msgWindow;
 }
 
 WINDOW* UserInterface::Windows::operator[](std::string key) {
@@ -180,6 +174,15 @@ UIActionType UserInterface::selectMenu(UserInterface::MenuType type, int selecte
     }
 }
 
+//вывод на экран info внешней информации:
+void UserInterface::updateInfoMenu(std::string line1, std::string line2) {
+    wclear(getInfoWindow());
+    box(getInfoWindow(), 0, 0);
+    mvwprintw(getInfoWindow(), 1, 1, line1.c_str());
+    mvwprintw(getInfoWindow(), 2, 1, line2.c_str());
+    wrefresh(getInfoWindow());
+}
+
 //вывод на на экран stats значений характеристик персонажа:
 void UserInterface::updateStatsMenu(int currentHealth, int maxHealth) {
     wclear(m_windows["stats"]);
@@ -189,8 +192,4 @@ void UserInterface::updateStatsMenu(int currentHealth, int maxHealth) {
     int numberOfEntrance = (getmaxx(m_windows["stats"]) - 8) * healthBarLength;
     mvwprintw(m_windows["stats"], 1, 7, "%s", std::string(numberOfEntrance, '|').c_str());
     wrefresh(m_windows["stats"]);
-}
-
-WINDOW* UserInterface::operator[](std::string key) {
-    return m_windows[key];
 }

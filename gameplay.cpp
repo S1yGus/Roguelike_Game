@@ -311,18 +311,16 @@ void Field::redrawField(Point newCoord) {
     }
     
     //вывод на экран описаний объектов в зоне видимости:
-    wclear(m_userInterface.getInfoWindow());
-    box(m_userInterface.getInfoWindow(), 0, 0);
     if (b_isSeeSomething) {
-        mvwprintw(m_userInterface.getInfoWindow(), 1, 1, "You are seeing: ");
+        std::string infoLine1 = "You are seeing: ";
         for (const Actor* actor : seenActors) {
-            wprintw(m_userInterface.getInfoWindow(), "%s%c", actor->getDescription().c_str(), " ");
+            infoLine1 += actor->getDescription() + " ";
         }
-        std::cout << "\n";
+        m_userInterface.updateInfoMenu(infoLine1, "");
+        
     }
     else
-        mvwprintw(m_userInterface.getInfoWindow(), 1, 1, "You are seeing nothing interesting.");
-    wrefresh(m_userInterface.getInfoWindow());
+        m_userInterface.updateInfoMenu("You are seeing nothing interesting.", "");
 }
 
 void Field::clearField(Point newCoord) {
@@ -343,22 +341,23 @@ void Game::map() const {
     std::cout << "\nMap.\n";
 }
 
+//debug:
 void Game::printMask() const { m_field.printMask(); }
 
 //подбор предмета в инвентарь:
 void Game::pickUp(Actor*& item) {
     m_player.addItemToInventory(item);
     m_field.redrawField(m_playerCoord);
-    mvwprintw(m_userInterface.getInfoWindow(), 2, 1, "%s%s%s", "->Item: ", item->getName().c_str(), " add to your inventory.");
-    wrefresh(m_userInterface.getInfoWindow());
+    std::string pickedUpMSG{ "-> Item: " + item->getName() + " add to your inventory." };
+    m_userInterface.updateInfoMenu(pickedUpMSG, "");
     item = &space;
 }
 
 //battle!
 void Game::battle(Actor& attacker, Actor*& deffender) {
-    std::string titleText{ attacker.getName() + " attacks " + deffender->getName() };
+    std::string titleBattle{ attacker.getName() + " attacks " + deffender->getName() };
     bool inBattle{ true };
-    UIActionType action{ m_userInterface.inMenu(UserInterface::MenuType::BATTLE, titleText) };
+    UIActionType action{ m_userInterface.inMenu(UserInterface::MenuType::BATTLE, titleBattle) };
     do {
         switch (action) {
         case UIActionType::ATTACK:
@@ -366,14 +365,18 @@ void Game::battle(Actor& attacker, Actor*& deffender) {
             if (deffender->getStats().currentHealth > 0) {
                 attacker.getStats().currentHealth -= deffender->getStats().strength;
                 m_field.updateStatsMenu();
-                action = m_userInterface.inMenu(UserInterface::MenuType::BATTLE, titleText);
+                titleBattle = "Enemy has left " + std::to_string(deffender->getStats().currentHealth) + " hp.";
+                action = m_userInterface.inMenu(UserInterface::MenuType::BATTLE, titleBattle);
+                wrefresh(m_userInterface.getInfoWindow());
             }
             else {
-                wprintw(m_userInterface.getActionWindow(), "Congratulations! You are win the battle!");
+                wclear(m_userInterface.getFieldWindow());
+                box(m_userInterface.getFieldWindow(), 0, 0);
+                m_field.redrawField(m_playerCoord);
+                m_userInterface.updateInfoMenu("-> Congratulations! You are win the battle!", "");
                 deffender = &space;
                 inBattle = false;
             }
-            
             break;
         }
     } while (inBattle);

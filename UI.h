@@ -82,14 +82,10 @@ public:
 	WINDOW* getActionWindow() {
 		return m_windows["action"];
 	}
-	WINDOW* getMSGWindow() {
-		return m_windows["msg"];
-	}
 
 	UIActionType inMenu(MenuType type, std::string titleText = "");
+	void updateInfoMenu(std::string line1, std::string line2);
 	void updateStatsMenu(int curretnHealth, int maxHealth);
-
-	WINDOW* operator[](std::string key);
 
 private:
 	void printMenu(WINDOW* window, int YOffset, int XOffset, int selected, int numItems, const char* title, const char** items, bool isInBox = false);
